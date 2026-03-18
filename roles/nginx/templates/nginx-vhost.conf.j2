@@ -1,0 +1,44 @@
+server {
+    listen {{ nginx_port }};
+    server_name {{ domain_name }} localhost;
+
+    root {{ web_root }}/html;
+    index index.html;
+
+    access_log {{ web_root }}/logs/access.log;
+    error_log {{ web_root }}/logs/error.log;
+
+    # Static file serving optimisations
+    location / {
+        try_files $uri $uri/ =404;
+
+        expires 30d;
+        add_header Cache-Control "public, no-transform";
+
+        # Security headers
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-XSS-Protection "1; mode=block" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    }
+
+    # Student ID endpoint
+    location /student-id {
+        alias {{ web_root }}/html/student-id;
+        add_header Content-Type text/plain;
+    }
+
+    # Nginx status for monitoring
+    location /status {
+        stub_status;
+        allow 127.0.0.1;
+        deny all;
+    }
+
+    # Prevent access to hidden files
+    location ~ /\. {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+}

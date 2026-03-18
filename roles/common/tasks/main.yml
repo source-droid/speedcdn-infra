@@ -1,0 +1,45 @@
+---
+- name: Install common packages
+  apt:
+    name:
+      - curl
+      - wget
+      - htop
+      - tree
+      - git
+      - vim
+      - ufw
+      - fail2ban
+      - apt-transport-https
+      - ca-certificates
+      - software-properties-common
+    state: present
+
+- name: Configure firewall
+  ufw:
+    rule: "{{ item.rule }}"
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+  loop:
+    - { rule: 'allow', port: '22', proto: 'tcp' }
+    - { rule: 'allow', port: '80', proto: 'tcp' }
+    - { rule: 'allow', port: '8080', proto: 'tcp' }
+    - { rule: 'allow', port: '9090', proto: 'tcp' }
+    - { rule: 'allow', port: '3000', proto: 'tcp' }
+
+- name: Enable UFW
+  ufw:
+    state: enabled
+    policy: deny
+
+- name: Set hostname
+  hostname:
+    name: speedcdn-origin
+
+- name: Create student user directory
+  file:
+    path: "/home/{{ deploy_user }}/ansible-logs"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: '0755'

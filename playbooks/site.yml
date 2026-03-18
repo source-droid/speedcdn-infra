@@ -1,0 +1,61 @@
+---
+# site.yml - Complete SpeedyCDN infrastructure deployment
+- name: Deploy SpeedyCDN Static File Server
+  hosts: webservers
+  become: yes
+  vars_files:
+    - ../inventory/production/group_vars/all.yml
+  
+  pre_tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+  
+  roles:
+    - role: common
+      tags: [common, always]
+    
+    - role: nginx
+      tags: [nginx, webserver]
+    
+    - role: varnish
+      tags: [varnish, cache]
+    
+    - role: prometheus
+      tags: [prometheus, monitoring]
+      when: enable_monitoring | default(true)
+    
+    - role: grafana
+      tags: [grafana, monitoring]
+      when: enable_monitoring | default(true)
+  
+  post_tasks:
+    - name: Verify student ID in configurations
+      shell: |
+        grep -r "{{ student_id }}" /etc/nginx/ /etc/varnish/ /etc/prometheus/ || true
+      register: id_check
+    
+    - name: Display student ID verification
+      debug:
+        msg: "Student ID {{ student_id }} found in configurations"
+    
+    - name: Test web server
+      uri:
+        url: "http://localhost:{{ nginx_port }}/student-id"
+        return_content: yes
+      register: webpage
+      failed_when: "'{{ student_id }}' not in webpage.content"
+    
+    - name: Display deployment complete
+      debug:
+        msg: |
+          ========================================
+          Deployment Complete!
+          Student ID: {{ student_id }}
+          Server: {{ inventory_hostname }}
+          Nginx: http://{{ ansible_default_ipv4.address }}:{{ nginx_port }}
+          Varnish: http://{{ ansible_default_ipv4.address }}:{{ varnish_port }}
+          Prometheus: http://{{ ansible_default_ipv4.address }}:{{ prometheus_port }}
+          Grafana: http://{{ ansible_default_ipv4.address }}:{{ grafana_port }}
+          ========================================

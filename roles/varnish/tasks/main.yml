@@ -1,0 +1,84 @@
+- name: Check Ubuntu version
+  shell: lsb_release -cs
+  register: ubuntu_release
+  changed_when: false
+
+- name: Check Ubuntu release file
+  slurp:
+    src: /etc/os-release
+  register: os_release_content
+  changed_when: false
+
+- name: Set fact for Ubuntu Noble (24.04)
+  set_fact:
+    is_ubuntu_noble: >-
+      {{ 'noble' in ubuntu_release.stdout
+         or '24.04' in (os_release_content.content | b64decode) }}
+
+- name: Debug Ubuntu version
+  debug:
+    msg: "Ubuntu release: {{ ubuntu_release.stdout }}, Is Noble: {{ is_ubuntu_noble }}"
+
+- name: Install Varnish (Ubuntu Noble)
+  apt:
+    name: varnish
+    state: present
+    update_cache: yes
+  when: is_ubuntu_noble
+
+- name: Add Varnish repository for Jammy (22.04)
+  block:
+    - name: Add Varnish 7.4 repository
+      apt_repository:
+        repo: "deb https://packagecloud.io/varnishcache/varnish74/ubuntu/ {{ ansible_distribution_release }} main"
+        state: present
+        update_cache: yes
+
+    - name: Add Varnish GPG key
+      apt_key:
+        url: https://packagecloud.io/varnishcache/varnish74/gpgkey
+        state: present
+
+    - name: Install Varnish from repository
+      apt:
+        name: varnish
+        state: present
+        update_cache: yes
+  when: not is_ubuntu_noble and ansible_distribution_release == "jammy"
+
+- name: Create Varnish directories
+  file:
+    path: /etc/varnish
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Deploy Varnish default.vcl
+  template:
+    src: default.vcl.j2
+    dest: /etc/varnish/default.vcl
+  notify: restart varnish
+
+- name: Create systemd override directory for Varnish
+  file:
+    path: /etc/systemd/system/varnish.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+
+- name: Create systemd override for Varnish
+  template:
+    src: varnish.service.j2
+    dest: /etc/systemd/system/varnish.service.d/override.conf
+  notify: reload systemd
+
+
+- name: Ensure Varnish is running
+  systemd:
+    name: varnish
+    state: started
+    enabled: yes
+    daemon_reload: yes

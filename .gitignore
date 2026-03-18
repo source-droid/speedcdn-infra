@@ -1,0 +1,15 @@
+*.retry
+*.log
+*.pid
+*.swp
+*.swo
+*~
+.DS_Store
+__pycache__
+*.pyc
+inventory/production/hosts
+*.vault
+ansible_key
+ansible_key.pub
+*.tmp
+*.bak

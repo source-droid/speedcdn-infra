@@ -1,0 +1,22 @@
+---
+# Global variables for all hosts
+student_id: "s23150618"
+deploy_user: "{{ student_id }}"
+
+# Domain configuration
+domain_name: "static.speedcdn.local"
+
+# Paths
+web_root: "/var/www/{{ domain_name }}"
+nginx_config_path: "/etc/nginx/sites-available/{{ domain_name }}"
+nginx_enabled_path: "/etc/nginx/sites-enabled/{{ domain_name }}"
+
+# Ports
+nginx_port: 8080
+varnish_port: 80
+prometheus_port: 9090
+grafana_port: 3000
+
+# Version tags
+nginx_version: "1.24.0"
+varnish_version: "7.1"

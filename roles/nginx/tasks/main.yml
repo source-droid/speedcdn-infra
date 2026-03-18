@@ -1,0 +1,73 @@
+---
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: present
+  notify: restart nginx
+
+- name: Create static content directories
+  file:
+    path: "{{ web_root }}/{{ item }}"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: www-data
+    mode: '0755'
+  loop:
+    - html
+    - logs
+    - backup
+
+- name: Copy static content files
+  copy:
+    src: "{{ playbook_dir }}/../files/static-content/{{ item }}"
+    dest: "/var/www/static.speedcdn.local/html/{{ item }}"
+    owner: "{{ deploy_user }}"
+    group: www-data
+    mode: '0644'
+  loop:
+    - test.jpg
+    - test.css
+    - test.js
+
+  ignore_errors: yes
+
+- name: Deploy index.html template
+  template:
+    src: index.html.j2
+    dest: "{{ web_root }}/html/index.html"
+    owner: "{{ deploy_user }}"
+    group: www-data
+    mode: '0644'
+
+- name: Deploy Nginx virtual host configuration
+  template:
+    src: nginx-vhost.conf.j2
+    dest: "{{ nginx_config_path }}"
+  notify: reload nginx
+
+- name: Enable site
+  file:
+    src: "{{ nginx_config_path }}"
+    dest: "{{ nginx_enabled_path }}"
+    state: link
+  notify: reload nginx
+
+- name: Remove default site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: reload nginx
+
+- name: Create student ID endpoint
+  copy:
+    content: "{{ student_id }}\n"
+    dest: "{{ web_root }}/html/student-id"
+    owner: "{{ deploy_user }}"
+    group: www-data
+    mode: '0644'
+
+- name: Ensure Nginx is running
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes

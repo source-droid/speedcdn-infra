@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SpeedyCDN Static Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
+        .student-id { color: #0066cc; font-weight: bold; font-size: 1.2em; }
+        .header { background: #f0f0f0; padding: 20px; border-radius: 5px; }
+        .section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { color: green; }
+        .hostname { font-family: monospace; background: #eee; padding: 2px 5px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>SpeedyCDN Static File Server</h1>
+        <p class="student-id">Student ID: {{ student_id }}</p>
+    </div>
+
+    <div class="section">
+        <h2>Deployment Information</h2>
+        <ul>
+            <li><strong>Deployed by:</strong> Ansible</li>
+            <li><strong>Deployment time:</strong> {{ ansible_date_time.iso8601 }}</li>
+            <li><strong>Host:</strong> <span class="hostname">{{ ansible_hostname }}</span></li>
+            <li><strong>IP Address:</strong> {{ ansible_default_ipv4.address }}</li>
+            <li><strong>OS:</strong> {{ ansible_distribution }} {{ ansible_distribution_version }}</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>Status</h2>
+        <p class="success">✅ SYSTEM OPERATIONAL</p>
+        <p>Nginx: Running on port {{ nginx_port }}</p>
+        <p>Varnish: Running on port {{ varnish_port }}</p>
+    </div>
+
+    <div class="section">
+        <h2>Test Assets</h2>
+        <ul>
+            <li><a href="/test.jpg">Sample Image (JPG)</a></li>
+            <li><a href="/test.css">Sample CSS</a></li>
+            <li><a href="/test.js">Sample JavaScript</a></li>
+            <li><a href="/student-id">Student ID Endpoint</a></li>
+            <li><a href="/status">Nginx Status</a></li>
+        </ul>
+    </div>
+
+    <hr>
+    <p><small>Deployed by Ansible for CMP4265 - Student: {{ student_id }}</small></p>
+</body>
+</html>
